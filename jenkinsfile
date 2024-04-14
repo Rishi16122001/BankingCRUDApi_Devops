@@ -3,14 +3,15 @@ pipeline {
     
     environment{
         SCANNER_HOME= tool 'sonar-scanner'
-        IMAGE_NAME = 'webapp-image'
+        IMAGE_NAME = 'banking-image'
         IMAGE_TAG = 'latest'
     }
 
     stages {
+        
         stage('Git Checkout') {
             steps {
-                git changelog: false, credentialsId: '8b607d58-38c7-45f6-95ec-d1f35e5e3e1a', poll: false, url: 'https://github.com/Rishi16122001/Demo-wepapi.git'
+                git changelog: false, credentialsId: '8b607d58-38c7-45f6-95ec-d1f35e5e3e1a', poll: false, url: 'https://github.com/Rishi16122001/BankingCRUDApi_Devops.git'
             }
         }
         
@@ -22,7 +23,7 @@ pipeline {
         
         stage('Build') {
             steps {
-                sh 'dotnet build Demo-wepapi.csproj --configuration Release'
+                sh 'dotnet build BankingCRUDApi_Devops/BankingCRUDApi_Devops.csproj --configuration Release'
             }
         }
         
@@ -35,16 +36,16 @@ pipeline {
         
         stage('Unit Testing') {
             steps {
-                sh 'dotnet test Demo-wepapi.sln --logger "trx;LogFileName=./test-results.trx"'
+                sh 'dotnet test BankingCRUDApi_Devops.sln --logger "trx;LogFileName=./test-results-BankingCRUD.trx"'
             }
         }
         
         stage('Sonarqube Code Analysis') {
             steps {
                 withSonarQubeEnv('sonar-server'){
-                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=demo-webAPI \
+                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=BankingCRUDApi \
                     -Dsonar.java.binaries=. \
-                    -Dsonar.projectKey=demo-webAPI '''
+                    -Dsonar.projectKey=BankingCRUDApi '''
                 }
             }
         }
@@ -53,8 +54,8 @@ pipeline {
             steps {
                 script{
                     withDockerRegistry(credentialsId: 'docker_login', toolName: 'docker') {
-                        sh "docker build -t demo-webapp -f Dockerfile ."
-                        sh "docker tag demo-webapp rishi16122001/${IMAGE_NAME}:${IMAGE_TAG}"
+                        sh "docker build -t banking-tag -f Dockerfile ."
+                        sh "docker tag banking-tag rishi16122001/${IMAGE_NAME}:${IMAGE_TAG}"
                         sh "docker push rishi16122001/${IMAGE_NAME}:${IMAGE_TAG}"
                     }
                 }
@@ -65,7 +66,7 @@ pipeline {
             steps {
                 script {
                     withDockerRegistry(credentialsId: 'docker_login', toolName: 'docker'){
-                        sh "docker run -d --name webappcontainer -p 8000:80 rishi16122001/${IMAGE_NAME}:${IMAGE_TAG}"
+                        sh "docker run -d --name BankingWebApiContainer -p 8000:80 rishi16122001/${IMAGE_NAME}:${IMAGE_TAG}"
                     }
                 }
             }
